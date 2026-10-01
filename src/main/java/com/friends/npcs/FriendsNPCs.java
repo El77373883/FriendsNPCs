@@ -30,6 +30,9 @@ public class FriendsNPCs extends JavaPlugin {
         manager.load();
         manager.startTasks();
         new NpcBehavior(this, manager).start();
+        getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
+        getServer().getPluginManager().registerEvents(new NpcActions(this, manager), this);
+
 
 
         getServer().getPluginManager().registerEvents(new NpcListener(), this);
