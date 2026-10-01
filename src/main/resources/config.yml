@@ -1,6 +1,6 @@
 deambular-radio: 8
-
-# Sube o baja los hologramas si los ves muy pegados o muy altos (ej: 0.3 o -0.2)
+seguir-radio: 20
+mirar-radio: 8
 holograma-ajuste: 0.0
 
 redes:
