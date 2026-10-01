@@ -1,7 +1,8 @@
-# Radio (en bloques) en el que deambulan los NPC
 deambular-radio: 8
 
-# Tus redes. Si pones http... se vuelven clicables en /fnpc info
+# Sube o baja los hologramas si los ves muy pegados o muy altos (ej: 0.3 o -0.2)
+holograma-ajuste: 0.0
+
 redes:
   youtube: ""
   tiktok: ""
