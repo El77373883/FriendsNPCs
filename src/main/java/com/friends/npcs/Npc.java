@@ -41,6 +41,13 @@ public class Npc {
     public int cooldown = 0;
     public String clickPerm = "";
     public final java.util.Map<java.util.UUID, Long> lastUse = new java.util.HashMap<>();
+        // Tienda
+    public boolean shop = false;
+    public String shopTitle = "&6&lTienda";
+    public int shopRows = 5;
+    public String shopColor = "celeste";
+    public List<ShopItem> shopItems = new ArrayList<>();
+
     public String anim = "off";
     public int animEvery = 0;
 
