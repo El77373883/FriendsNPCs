@@ -1,0 +1,9 @@
+# Radio (en bloques) en el que deambulan los NPC
+deambular-radio: 8
+
+# Tus redes. Si pones http... se vuelven clicables en /fnpc info
+redes:
+  youtube: ""
+  tiktok: ""
+  discord: ""
+  instagram: ""
