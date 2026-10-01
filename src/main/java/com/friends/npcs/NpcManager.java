@@ -494,6 +494,10 @@ public class NpcManager {
             n.pathWait = s.getInt("path.espera", 3);
             n.pathRunning = s.getBoolean("path.activa", true);
             n.look = s.getBoolean("mirar", false);
+            n.actions = new ArrayList<>(s.getStringList("acciones.lista"));
+            n.clickType = s.getString("acciones.clic", "derecho");
+            n.cooldown = s.getInt("acciones.cooldown", 0);
+            n.clickPerm = s.getString("acciones.permiso", "");
             n.anim = s.getString("anim.nombre", "off");
             n.animEvery = s.getInt("anim.cada", 0);
             n.skinName = s.getString("skin.nombre");
