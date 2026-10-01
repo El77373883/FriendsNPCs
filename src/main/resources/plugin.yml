@@ -1,0 +1,14 @@
+name: FriendsNPCs
+version: '1.0'
+main: com.friends.npcs.FriendsNPCs
+api-version: '26.2'
+authors: [soyadrianyt001]
+description: NPCs con skin y movimiento real
+commands:
+  fnpc:
+    description: Comando principal de FriendsNPCs
+    usage: /fnpc ayuda
+permissions:
+  fnpc.admin:
+    description: Acceso total a FriendsNPCs
+    default: op
