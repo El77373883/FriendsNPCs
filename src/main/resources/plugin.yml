@@ -4,6 +4,7 @@ main: com.friends.npcs.FriendsNPCs
 api-version: '26.2'
 authors: [soyadrianyt001]
 description: NPCs con skin y movimiento real
+softdepend: [Vault, SkinsRestorer]
 commands:
   fnpc:
     description: Comando principal de FriendsNPCs
