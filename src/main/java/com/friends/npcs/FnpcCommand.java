@@ -2,8 +2,11 @@ package com.friends.npcs;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Particle;
+import org.bukkit.Sound;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -33,6 +36,11 @@ public class FnpcCommand implements CommandExecutor, TabCompleter {
     }
 
     private static final int MAX_LINE = 200;
+    private static final int MAX_POINTS = 500;
+    private static final List<String> MODES = List.of("quieto", "deambular", "patrullar", "seguir");
+    private static final List<String> PATH_SUBS = List.of("add", "insert", "remove", "list", "clear",
+            "tp", "show", "goto", "modo", "velocidad", "espera", "iniciar", "detener");
+    private static final List<String> PATH_MODES = List.of("loop", "pingpong", "una_vez");
 
     private final FriendsNPCs plugin;
     private final NpcManager mgr;
@@ -69,6 +77,9 @@ public class FnpcCommand implements CommandExecutor, TabCompleter {
             case "pose" -> pose(s, a);
             case "glow" -> glow(s, a);
             case "efecto" -> efecto(s, a);
+            case "path" -> path(s, a);
+            case "mirar" -> mirar(s, a);
+            case "anim" -> anim(s, a);
             case "reload" -> {
                 plugin.reloadConfig();
                 mgr.reload();
@@ -85,7 +96,10 @@ public class FnpcCommand implements CommandExecutor, TabCompleter {
         s.sendMessage(c("&e/fnpc borrar|tp|mover <id>"));
         s.sendMessage(c("&e/fnpc lista"));
         s.sendMessage(c("&e/fnpc nombre <id> <texto>"));
-        s.sendMessage(c("&e/fnpc modo <id> <quieto|deambular>"));
+        s.sendMessage(c("&e/fnpc modo <id> <quieto|deambular|patrullar|seguir>"));
+        s.sendMessage(c("&e/fnpc mirar <id> <on|off>"));
+        s.sendMessage(c("&e/fnpc path <id> <add|insert|remove|list|clear|tp|show|goto|modo|velocidad|espera|iniciar|detener>"));
+        s.sendMessage(c("&e/fnpc anim <id> <saludar|golpear|off> [repetir <seg>]"));
         s.sendMessage(c("&e/fnpc skin <id> <jugador>"));
         s.sendMessage(c("&e/fnpc edit <setline|addline|insertline|removeline|lines|clearlines> <id> ..."));
         s.sendMessage(c("&e/fnpc pose <id> <normal|dormir|nadar|agachado|volar|girar>"));
@@ -119,7 +133,15 @@ public class FnpcCommand implements CommandExecutor, TabCompleter {
         }
         String name = a.length > 3 ? String.join(" ", Arrays.copyOfRange(a, 3, a.length)) : a[1];
         String err = mgr.create(a[1], a[2], name, p.getLocation());
-        s.sendMessage(err != null ? c("&c" + err) : c("&aNPC &e" + a[1] + " &acreado."));
+        if (err != null) {
+            s.sendMessage(c("&c" + err));
+            return;
+        }
+        s.sendMessage(c("&aNPC &e" + a[1] + " &acreado."));
+        if (mgr.all().size() == 1) {
+            p.showTitle(Title.title(c("&6&l★ FriendsNPCs ★"), c("&7por &esoyadrianyt001")));
+            p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
+        }
     }
 
     private void borrar(CommandSender s, String[] a) {
@@ -183,12 +205,16 @@ public class FnpcCommand implements CommandExecutor, TabCompleter {
 
     private void modo(CommandSender s, String[] a) {
         Npc n = a.length > 2 ? mgr.get(a[1]) : null;
-        if (n == null || !List.of("quieto", "deambular").contains(a[2].toLowerCase())) {
-            s.sendMessage(c("&eUso: /fnpc modo <id> <quieto|deambular>"));
+        if (n == null || !MODES.contains(a[2].toLowerCase())) {
+            s.sendMessage(c("&eUso: /fnpc modo <id> <" + String.join("|", MODES) + ">"));
             return;
         }
-        mgr.setMode(n, a[2].toLowerCase());
-        s.sendMessage(c("&aModo cambiado a &e" + a[2].toLowerCase()));
+        String m = a[2].toLowerCase();
+        mgr.setMode(n, m);
+        s.sendMessage(c("&aModo cambiado a &e" + m));
+        if (m.equals("patrullar") && n.path.isEmpty()) {
+            s.sendMessage(c("&7Aun no tiene ruta. Agrega puntos con &e/fnpc path " + n.id + " add"));
+        }
     }
 
     // ---------- Skin ----------
@@ -334,6 +360,246 @@ public class FnpcCommand implements CommandExecutor, TabCompleter {
         s.sendMessage(c("&aEfecto &e" + e + "&a: " + (on ? "activado" : "desactivado")));
     }
 
+    // ---------- Mirar / animaciones ----------
+
+    private void mirar(CommandSender s, String[] a) {
+        Npc n = a.length > 2 ? mgr.get(a[1]) : null;
+        if (n == null || !(a[2].equalsIgnoreCase("on") || a[2].equalsIgnoreCase("off"))) {
+            s.sendMessage(c("&eUso: /fnpc mirar <id> <on|off>"));
+            return;
+        }
+        n.look = a[2].equalsIgnoreCase("on");
+        mgr.save();
+        s.sendMessage(c("&aMirar al jugador: &e" + (n.look ? "activado" : "desactivado")));
+    }
+
+    private void anim(CommandSender s, String[] a) {
+        Npc n = a.length > 2 ? mgr.get(a[1]) : null;
+        String an = a.length > 2 ? a[2].toLowerCase() : "";
+        if (n == null || !(an.equals("saludar") || an.equals("golpear") || an.equals("off"))) {
+            s.sendMessage(c("&eUso: /fnpc anim <id> <saludar|golpear|off> [repetir <segundos>]"));
+            return;
+        }
+        if (an.equals("off")) {
+            n.anim = "off";
+            n.animEvery = 0;
+            mgr.save();
+            s.sendMessage(c("&aAnimacion repetida desactivada."));
+            return;
+        }
+        if (a.length > 3 && a[3].equalsIgnoreCase("repetir")) {
+            Integer sec = intArg(a, 4, 1, 3600);
+            if (sec == null) {
+                s.sendMessage(c("&eUso: /fnpc anim <id> " + an + " repetir <1-3600>"));
+                return;
+            }
+            n.anim = an;
+            n.animEvery = sec;
+            n.lastAnim = 0;
+            mgr.save();
+            s.sendMessage(c("&a" + an + " cada &e" + sec + "s&a."));
+            return;
+        }
+        NpcBehavior.play(plugin, n, an);
+        s.sendMessage(c("&aAnimacion: &e" + an));
+    }
+
+    // ---------- Rutas ----------
+
+    private Integer intArg(String[] a, int i, int min, int max) {
+        if (a.length <= i) return null;
+        try {
+            int v = Integer.parseInt(a[i]);
+            return v >= min && v <= max ? v : null;
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private void path(CommandSender s, String[] a) {
+        if (a.length < 3) {
+            s.sendMessage(c("&eUso: /fnpc path <id> <" + String.join("|", PATH_SUBS) + ">"));
+            return;
+        }
+        Npc n = mgr.get(a[1]);
+        if (n == null) {
+            s.sendMessage(c("&cNo existe ese NPC."));
+            return;
+        }
+        String sub = a[2].toLowerCase();
+        Player p = s instanceof Player pl ? pl : null;
+        if (p == null && List.of("add", "insert", "tp", "show", "goto").contains(sub)) {
+            s.sendMessage(c("&cSolo jugadores."));
+            return;
+        }
+
+        switch (sub) {
+            case "add" -> {
+                if (n.path.size() >= MAX_POINTS) {
+                    s.sendMessage(c("&cLimite de " + MAX_POINTS + " puntos."));
+                    return;
+                }
+                n.path.add(NpcBehavior.format(p.getLocation()));
+                mgr.save();
+                s.sendMessage(c("&aPunto &e" + n.path.size() + " &aagregado."));
+            }
+            case "insert" -> {
+                Integer k = intArg(a, 3, 1, n.path.size() + 1);
+                if (k == null || n.path.size() >= MAX_POINTS) {
+                    s.sendMessage(c("&eUso: /fnpc path <id> insert <1-" + (n.path.size() + 1) + ">"));
+                    return;
+                }
+                n.path.add(k - 1, NpcBehavior.format(p.getLocation()));
+                mgr.save();
+                s.sendMessage(c("&aPunto insertado en &e" + k + "&a."));
+            }
+            case "remove" -> {
+                Integer k = intArg(a, 3, 1, n.path.size());
+                if (k == null) {
+                    s.sendMessage(c("&eUso: /fnpc path <id> remove <numero de punto>"));
+                    return;
+                }
+                n.path.remove(k - 1);
+                NpcBehavior.resetPath(n);
+                mgr.save();
+                s.sendMessage(c("&aPunto &e" + k + " &aborrado."));
+            }
+            case "list" -> {
+                if (n.path.isEmpty()) {
+                    s.sendMessage(c("&7Ese NPC no tiene ruta."));
+                    return;
+                }
+                s.sendMessage(c("&6Ruta de &e" + n.id + " &7(" + n.pathMode + ", vel " + n.pathSpeed
+                        + ", espera " + n.pathWait + "s, " + (n.pathRunning ? "activa" : "detenida") + ")"));
+                for (int i = 0; i < n.path.size(); i++) {
+                    s.sendMessage(c("&e" + (i + 1) + "&7: " + n.path.get(i).replace(",", ", ")));
+                }
+            }
+            case "clear" -> {
+                n.path.clear();
+                NpcBehavior.resetPath(n);
+                mgr.save();
+                s.sendMessage(c("&aRuta borrada."));
+            }
+            case "tp" -> {
+                Integer k = intArg(a, 3, 1, n.path.size());
+                Location l = k == null ? null : NpcBehavior.parse(n.path.get(k - 1));
+                if (l == null) {
+                    s.sendMessage(c("&eUso: /fnpc path <id> tp <numero de punto> (el mundo debe estar cargado)"));
+                    return;
+                }
+                p.teleport(l);
+                s.sendMessage(c("&aTeletransportado al punto &e" + k + "&a."));
+            }
+            case "show" -> show(p, n);
+            case "goto" -> {
+                Mob m = n.mover();
+                if (m == null || n.body == null) {
+                    s.sendMessage(c("&cEl NPC no esta cargado."));
+                    return;
+                }
+                Location t;
+                if (a.length > 3) {
+                    Integer k = intArg(a, 3, 1, n.path.size());
+                    t = k == null ? null : NpcBehavior.parse(n.path.get(k - 1));
+                    if (t == null) {
+                        s.sendMessage(c("&eUso: /fnpc path <id> goto [numero de punto]"));
+                        return;
+                    }
+                } else {
+                    t = p.getLocation();
+                }
+                n.gotoTarget = t.clone();
+                n.gotoUntil = System.currentTimeMillis() + 30000;
+                m.setAI(true);
+                s.sendMessage(c("&aEl NPC va hacia alla."));
+            }
+            case "modo" -> {
+                String v = a.length > 3 ? a[3].toLowerCase() : "";
+                if (!PATH_MODES.contains(v)) {
+                    s.sendMessage(c("&eUso: /fnpc path <id> modo <loop|pingpong|una_vez>"));
+                    return;
+                }
+                n.pathMode = v;
+                NpcBehavior.resetPath(n);
+                mgr.save();
+                s.sendMessage(c("&aModo de ruta: &e" + v));
+            }
+            case "velocidad" -> {
+                try {
+                    double v = Double.parseDouble(a[3]);
+                    if (v < 0.1 || v > 3.0) throw new NumberFormatException();
+                    n.pathSpeed = v;
+                    mgr.save();
+                    s.sendMessage(c("&aVelocidad: &e" + v));
+                } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
+                    s.sendMessage(c("&eUso: /fnpc path <id> velocidad <0.1-3.0>"));
+                }
+            }
+            case "espera" -> {
+                Integer v = intArg(a, 3, 0, 300);
+                if (v == null) {
+                    s.sendMessage(c("&eUso: /fnpc path <id> espera <0-300 segundos>"));
+                    return;
+                }
+                n.pathWait = v;
+                mgr.save();
+                s.sendMessage(c("&aEspera en cada punto: &e" + v + "s"));
+            }
+            case "iniciar" -> {
+                if (n.path.isEmpty()) {
+                    s.sendMessage(c("&cPrimero agrega puntos: /fnpc path " + n.id + " add"));
+                    return;
+                }
+                n.pathRunning = true;
+                mgr.setMode(n, "patrullar"); // reinicia la ruta y guarda
+                s.sendMessage(c("&aRuta iniciada (modo patrullar)."));
+            }
+            case "detener" -> {
+                n.pathRunning = false;
+                Mob m = n.mover();
+                if (m != null) m.getPathfinder().stopPathfinding();
+                mgr.save();
+                s.sendMessage(c("&aRuta detenida."));
+            }
+            default -> s.sendMessage(c("&eUso: /fnpc path <id> <" + String.join("|", PATH_SUBS) + ">"));
+        }
+    }
+
+    private void show(Player p, Npc n) {
+        List<Location> pts = new ArrayList<>();
+        for (String raw : n.path) {
+            Location l = NpcBehavior.parse(raw);
+            if (l != null && l.getWorld() == p.getWorld()) pts.add(l);
+        }
+        if (pts.isEmpty()) {
+            p.sendMessage(c("&7No hay puntos para mostrar en este mundo."));
+            return;
+        }
+        p.sendMessage(c("&aMostrando la ruta por 15 segundos."));
+        int[] ticks = {0};
+        Bukkit.getScheduler().runTaskTimer(plugin, task -> {
+            if (!p.isOnline() || ticks[0]++ >= 30) {
+                task.cancel();
+                return;
+            }
+            for (int i = 0; i < pts.size(); i++) {
+                Location pt = pts.get(i);
+                p.spawnParticle(Particle.HAPPY_VILLAGER, pt.clone().add(0, 0.5, 0), 5, 0.2, 0.3, 0.2, 0);
+                if (i + 1 < pts.size()) line(p, pt, pts.get(i + 1));
+            }
+        }, 0L, 10L);
+    }
+
+    private void line(Player p, Location a, Location b) {
+        int steps = (int) Math.min(200, a.distance(b) * 2);
+        for (int i = 1; i < steps; i++) {
+            double t = i / (double) steps;
+            Location l = a.clone().add(b.clone().subtract(a).toVector().multiply(t)).add(0, 0.3, 0);
+            p.spawnParticle(Particle.END_ROD, l, 1, 0, 0, 0, 0);
+        }
+    }
+
     // ---------- Autocompletado ----------
 
     @Override
@@ -343,15 +609,15 @@ public class FnpcCommand implements CommandExecutor, TabCompleter {
         String sub = a[0].toLowerCase();
 
         if (a.length == 1) {
-            return filter(List.of("create", "borrar", "lista", "tp", "mover", "nombre", "modo", "skin",
-                    "edit", "pose", "glow", "efecto", "reload", "ayuda", "info"), a[0]);
+            return filter(List.of("create", "borrar", "lista", "tp", "mover", "nombre", "modo", "mirar",
+                    "path", "anim", "skin", "edit", "pose", "glow", "efecto", "reload", "ayuda", "info"), a[0]);
         }
         if (a.length == 2) {
             if (sub.equals("edit")) {
                 return filter(List.of("setline", "addline", "insertline", "removeline", "lines", "clearlines"), a[1]);
             }
-            if (List.of("borrar", "delete", "tp", "mover", "nombre", "modo", "skin", "pose", "glow", "efecto")
-                    .contains(sub)) {
+            if (List.of("borrar", "delete", "tp", "mover", "nombre", "modo", "mirar", "path", "anim",
+                    "skin", "pose", "glow", "efecto").contains(sub)) {
                 return filter(ids, a[1]);
             }
         }
@@ -359,7 +625,10 @@ public class FnpcCommand implements CommandExecutor, TabCompleter {
             switch (sub) {
                 case "edit" -> { return filter(ids, a[2]); }
                 case "create", "crear" -> { return filter(TYPES, a[2]); }
-                case "modo" -> { return filter(List.of("quieto", "deambular"), a[2]); }
+                case "modo" -> { return filter(MODES, a[2]); }
+                case "mirar" -> { return filter(List.of("on", "off"), a[2]); }
+                case "path" -> { return filter(PATH_SUBS, a[2]); }
+                case "anim" -> { return filter(List.of("saludar", "golpear", "off"), a[2]); }
                 case "pose" -> { return filter(new ArrayList<>(NpcManager.POSES.keySet()), a[2]); }
                 case "glow" -> {
                     List<String> l = new ArrayList<>(NpcManager.COLORS.keySet());
@@ -374,7 +643,11 @@ public class FnpcCommand implements CommandExecutor, TabCompleter {
                 default -> { }
             }
         }
-        if (a.length == 4 && sub.equals("efecto")) return filter(List.of("on", "off"), a[3]);
+        if (a.length == 4) {
+            if (sub.equals("efecto")) return filter(List.of("on", "off"), a[3]);
+            if (sub.equals("path") && a[2].equalsIgnoreCase("modo")) return filter(PATH_MODES, a[3]);
+            if (sub.equals("anim")) return filter(List.of("repetir"), a[3]);
+        }
         return List.of();
     }
 
