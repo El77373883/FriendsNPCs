@@ -1,6 +1,7 @@
 package com.friends.npcs;
 
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
@@ -10,8 +11,15 @@ public class FriendsNPCs extends JavaPlugin {
 
     private NpcManager manager;
 
+    /** Texto con codigos &a, &l, etc. */
     public static Component c(String s) {
         return LegacyComponentSerializer.legacyAmpersand().deserialize(s);
+    }
+
+    /** Si el texto tiene <tags> usa MiniMessage (degradados), si no usa & clasico. */
+    public static Component rich(String s) {
+        if (s.contains("<")) return MiniMessage.miniMessage().deserialize(s);
+        return c(s);
     }
 
     @Override
