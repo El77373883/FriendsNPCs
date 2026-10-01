@@ -35,6 +35,12 @@ public class Npc {
 
     // Extras
     public boolean look = false;
+        // Acciones al hacer clic
+    public List<String> actions = new ArrayList<>();
+    public String clickType = "derecho"; // izquierdo | derecho | ambos
+    public int cooldown = 0;
+    public String clickPerm = "";
+    public final java.util.Map<java.util.UUID, Long> lastUse = new java.util.HashMap<>();
     public String anim = "off";
     public int animEvery = 0;
 
