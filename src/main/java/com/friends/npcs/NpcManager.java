@@ -35,6 +35,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -136,7 +137,6 @@ public class NpcManager {
 
     // ---------- Edicion ----------
 
-    /** Vuelve a aplicar todo (nombre, holograma, pose, glow...) y guarda. */
     public void refresh(Npc n) {
         apply(n);
         rebuildHolo(n);
@@ -151,7 +151,7 @@ public class NpcManager {
     public void move(Npc n, Location l) {
         n.home = l.clone();
         n.worldName = l.getWorld().getName();
-        removeHolo(n); // un vehiculo con pasajero no se puede teletransportar
+        removeHolo(n);
         if (n.brain != null) n.brain.teleport(l);
         if (n.body != null) n.body.teleport(l);
         rebuildHolo(n);
@@ -160,6 +160,10 @@ public class NpcManager {
 
     public void setMode(Npc n, String mode) {
         n.mode = mode;
+        NpcBehavior.resetPath(n);
+        n.gotoTarget = null;
+        Mob m = n.mover();
+        if (m != null) m.getPathfinder().stopPathfinding();
         refresh(n);
     }
 
@@ -168,7 +172,6 @@ public class NpcManager {
         load();
     }
 
-    /** Pide la skin a Mojang y la guarda. done recibe null si salio bien, o el error. */
     public void setSkin(Npc n, String skin, Consumer<String> done) {
         PlayerProfile pp = Bukkit.createProfile(skin);
         pp.update().whenComplete((res, ex) -> Bukkit.getScheduler().runTask(plugin, () -> {
@@ -331,7 +334,7 @@ public class NpcManager {
                     new Vector3f(1f, 1f, 1f), new AxisAngle4f()));
             d.getPersistentDataContainer().set(KEY, PersistentDataType.STRING, n.id);
         });
-        carrier.addPassenger(n.holo); // va montado: se mueve con el NPC sin lag
+        carrier.addPassenger(n.holo);
     }
 
     void kill(Npc n) {
@@ -353,7 +356,6 @@ public class NpcManager {
         for (Npc n : npcs.values()) kill(n);
     }
 
-    /** Limpia entidades y equipos que hayan quedado de un cierre mal hecho. */
     public void cleanOrphans() {
         for (World w : Bukkit.getWorlds()) {
             for (Entity e : w.getEntities()) {
@@ -392,7 +394,8 @@ public class NpcManager {
         // Cada 4 segundos: nuevo destino para los que deambulan
         Bukkit.getScheduler().runTaskTimer(plugin, () -> {
             for (Npc n : npcs.values()) {
-                if (!n.mode.equals("deambular") || n.pose.equals("dormir") || !alive(n)) continue;
+                if (!n.mode.equals("deambular") || n.pose.equals("dormir")
+                        || n.gotoTarget != null || !alive(n)) continue;
                 Mob m = n.mover();
                 if (m != null) m.getPathfinder().moveTo(randomPoint(n));
             }
@@ -439,6 +442,14 @@ public class NpcManager {
             y.set(p + "pose", n.pose);
             y.set(p + "glow", n.glow);
             y.set(p + "efectos", new ArrayList<>(n.effects));
+            y.set(p + "path.puntos", n.path);
+            y.set(p + "path.modo", n.pathMode);
+            y.set(p + "path.velocidad", n.pathSpeed);
+            y.set(p + "path.espera", n.pathWait);
+            y.set(p + "path.activa", n.pathRunning);
+            y.set(p + "mirar", n.look);
+            y.set(p + "anim.nombre", n.anim);
+            y.set(p + "anim.cada", n.animEvery);
             if (n.skinName != null) {
                 y.set(p + "skin.nombre", n.skinName);
                 y.set(p + "skin.value", n.skinValue);
@@ -472,7 +483,15 @@ public class NpcManager {
             n.lines = new ArrayList<>(s.getStringList("lineas"));
             n.pose = s.getString("pose", "normal");
             n.glow = s.getString("glow", "off");
-            n.effects = new java.util.HashSet<>(s.getStringList("efectos"));
+            n.effects = new HashSet<>(s.getStringList("efectos"));
+            n.path = new ArrayList<>(s.getStringList("path.puntos"));
+            n.pathMode = s.getString("path.modo", "loop");
+            n.pathSpeed = s.getDouble("path.velocidad", 1.0);
+            n.pathWait = s.getInt("path.espera", 3);
+            n.pathRunning = s.getBoolean("path.activa", true);
+            n.look = s.getBoolean("mirar", false);
+            n.anim = s.getString("anim.nombre", "off");
+            n.animEvery = s.getInt("anim.cada", 0);
             n.skinName = s.getString("skin.nombre");
             n.skinValue = s.getString("skin.value");
             n.skinSignature = s.getString("skin.signature");
