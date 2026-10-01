@@ -29,6 +29,8 @@ public class FriendsNPCs extends JavaPlugin {
         manager.cleanOrphans();
         manager.load();
         manager.startTasks();
+        new NpcBehavior(this, manager).start();
+
 
         getServer().getPluginManager().registerEvents(new NpcListener(), this);
 
