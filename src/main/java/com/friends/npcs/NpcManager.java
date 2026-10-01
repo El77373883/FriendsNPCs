@@ -448,6 +448,10 @@ public class NpcManager {
             y.set(p + "path.espera", n.pathWait);
             y.set(p + "path.activa", n.pathRunning);
             y.set(p + "mirar", n.look);
+            y.set(p + "acciones.lista", n.actions);
+            y.set(p + "acciones.clic", n.clickType);
+            y.set(p + "acciones.cooldown", n.cooldown);
+            y.set(p + "acciones.permiso", n.clickPerm);
             y.set(p + "anim.nombre", n.anim);
             y.set(p + "anim.cada", n.animEvery);
             if (n.skinName != null) {
