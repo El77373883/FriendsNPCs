@@ -16,7 +16,7 @@ public class Npc {
     public final String id;
     public final String type; // "PLAYER" o un EntityType
     public String name;
-    public String mode = "deambular";
+    public String mode = "deambular"; // quieto | deambular | patrullar | seguir
     public Location home;
     public String worldName;
 
@@ -25,6 +25,26 @@ public class Npc {
     public String glow = "off";
     public Set<String> effects = new HashSet<>();
     public String skinName, skinValue, skinSignature;
+
+    // Ruta
+    public List<String> path = new ArrayList<>(); // "mundo,x,y,z"
+    public String pathMode = "loop";              // loop | pingpong | una_vez
+    public double pathSpeed = 1.0;
+    public int pathWait = 3;
+    public boolean pathRunning = true;
+
+    // Extras
+    public boolean look = false;
+    public String anim = "off";
+    public int animEvery = 0;
+
+    // Datos temporales (no se guardan)
+    public int pathIndex = 0, pathDir = 1;
+    public boolean pathDone = false;
+    public long waitUntil, stuckSince, lastAnim;
+    public double lastDist = Double.MAX_VALUE;
+    public Location gotoTarget;
+    public long gotoUntil;
 
     public LivingEntity body;
     public Zombie brain;
