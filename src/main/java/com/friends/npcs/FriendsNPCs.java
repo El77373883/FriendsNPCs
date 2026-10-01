@@ -8,6 +8,7 @@ import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class FriendsNPCs extends JavaPlugin {
+    public NpcShop shop;
 
     private NpcManager manager;
 
@@ -32,6 +33,8 @@ public class FriendsNPCs extends JavaPlugin {
         new NpcBehavior(this, manager).start();
         getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
         getServer().getPluginManager().registerEvents(new NpcActions(this, manager), this);
+        shop = new NpcShop(this, manager);
+        getServer().getPluginManager().registerEvents(shop, this);
 
 
 
