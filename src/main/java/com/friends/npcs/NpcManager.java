@@ -452,6 +452,11 @@ public class NpcManager {
             y.set(p + "acciones.clic", n.clickType);
             y.set(p + "acciones.cooldown", n.cooldown);
             y.set(p + "acciones.permiso", n.clickPerm);
+            y.set(p + "tienda.activa", n.shop);
+            y.set(p + "tienda.titulo", n.shopTitle);
+            y.set(p + "tienda.filas", n.shopRows);
+            y.set(p + "tienda.color", n.shopColor);
+            y.set(p + "tienda.items", NpcShop.serialize(n.shopItems));
             y.set(p + "anim.nombre", n.anim);
             y.set(p + "anim.cada", n.animEvery);
             if (n.skinName != null) {
@@ -498,6 +503,11 @@ public class NpcManager {
             n.clickType = s.getString("acciones.clic", "derecho");
             n.cooldown = s.getInt("acciones.cooldown", 0);
             n.clickPerm = s.getString("acciones.permiso", "");
+            n.shop = s.getBoolean("tienda.activa", false);
+            n.shopTitle = s.getString("tienda.titulo", "&6&lTienda");
+            n.shopRows = s.getInt("tienda.filas", 5);
+            n.shopColor = s.getString("tienda.color", "celeste");
+            n.shopItems = NpcShop.deserialize(s.getMapList("tienda.items"));
             n.anim = s.getString("anim.nombre", "off");
             n.animEvery = s.getInt("anim.cada", 0);
             n.skinName = s.getString("skin.nombre");
