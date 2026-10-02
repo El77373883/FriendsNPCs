@@ -35,6 +35,8 @@ public class Npc {
 
     // Extras
     public boolean look = false;
+    public java.util.Map<String, org.bukkit.inventory.ItemStack> equip = new java.util.LinkedHashMap<>();
+
         // Acciones al hacer clic
     public List<String> actions = new ArrayList<>();
     public String clickType = "derecho"; // izquierdo | derecho | ambos
