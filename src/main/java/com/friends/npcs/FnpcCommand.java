@@ -114,6 +114,7 @@ public class FnpcCommand implements CommandExecutor, TabCompleter {
         s.sendMessage(c("&e/fnpc efecto <id> <fuego|invisible> [on|off]"));
         s.sendMessage(c("&e/fnpc shop <id> <crear|quitar|editar|items|precio|titulo|filas|color|limpiar>"));
         s.sendMessage(c("&e/fnpc action <id> <add|list|remove|clear|clic|cooldown|permiso>"));
+        s.sendMessage(c("&e/fnpc equip <id> <casco|pechera|pantalones|botas|mano|mano2|copiar|limpiar|ver>"));
         s.sendMessage(c("&e/fnpc reload &7| &e/fnpc info &7| &e/fnpc creator"));
     }
 
