@@ -259,9 +259,9 @@ public class PoliceManager implements Listener, CommandExecutor, TabCompleter {
     @EventHandler(ignoreCancelled = true)
     public void onTeleport(PlayerTeleportEvent e) {
         if (!isJailed(e.getPlayer())) return;
-        switch (e.getCause()) {
-            case ENDER_PEARL, CHORUS_FRUIT, COMMAND -> e.setCancelled(true);
-            default -> { }
+          String cause = e.getCause().name();
+        if (cause.equals("ENDER_PEARL") || cause.equals("CHORUS_FRUIT") || cause.equals("COMMAND")) {
+            e.setCancelled(true);
         }
     }
 
