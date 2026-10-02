@@ -16,7 +16,7 @@ public class Npc {
     public final String id;
     public final String type; // "PLAYER" o un EntityType
     public String name;
-    public String mode = "deambular"; // quieto | deambular | patrullar | seguir
+    public String mode = "quieto"; // quieto | deambular | patrullar | seguir
     public Location home;
     public String worldName;
 
