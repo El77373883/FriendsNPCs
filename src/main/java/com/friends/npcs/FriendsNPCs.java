@@ -9,6 +9,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public class FriendsNPCs extends JavaPlugin {
     public NpcShop shop;
+    public PoliceManager police;
 
     private NpcManager manager;
 
@@ -36,7 +37,9 @@ public class FriendsNPCs extends JavaPlugin {
         shop = new NpcShop(this, manager);
         getServer().getPluginManager().registerEvents(shop, this);
 
-
+        // Parte 6: policia
+        police = new PoliceManager(this);
+        police.start();
 
         getServer().getPluginManager().registerEvents(new NpcListener(), this);
 
@@ -51,6 +54,7 @@ public class FriendsNPCs extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (police != null) police.save();
         if (manager != null) {
             manager.save();
             manager.removeAll();
