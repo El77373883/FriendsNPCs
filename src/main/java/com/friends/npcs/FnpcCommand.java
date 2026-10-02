@@ -37,6 +37,7 @@ public class FnpcCommand implements CommandExecutor, TabCompleter {
 
     private static final int MAX_LINE = 200;
     private static final int MAX_POINTS = 500;
+    private static final String DEFAULT_LINE = "&7Nueva linea";
     private static final List<String> MODES = List.of("quieto", "deambular", "patrullar", "seguir");
     private static final List<String> PATH_SUBS = List.of("add", "insert", "remove", "list", "clear",
             "tp", "show", "goto", "modo", "velocidad", "espera", "iniciar", "detener");
@@ -109,12 +110,12 @@ public class FnpcCommand implements CommandExecutor, TabCompleter {
         s.sendMessage(c("&e/fnpc anim <id> <saludar|golpear|off> [repetir <seg>]"));
         s.sendMessage(c("&e/fnpc skin <id> <jugador>"));
         s.sendMessage(c("&e/fnpc edit <setline|addline|insertline|removeline|lines|clearlines> <id> ..."));
+        s.sendMessage(c("&e/fnpc equip <id> <casco|pechera|pantalones|botas|mano|mano2|copiar|limpiar|ver>"));
         s.sendMessage(c("&e/fnpc pose <id> <normal|dormir|nadar|agachado|volar|girar>"));
         s.sendMessage(c("&e/fnpc glow <id> <color|off|arcoiris>"));
         s.sendMessage(c("&e/fnpc efecto <id> <fuego|invisible> [on|off]"));
         s.sendMessage(c("&e/fnpc shop <id> <crear|quitar|editar|items|precio|titulo|filas|color|limpiar>"));
         s.sendMessage(c("&e/fnpc action <id> <add|list|remove|clear|clic|cooldown|permiso>"));
-        s.sendMessage(c("&e/fnpc equip <id> <casco|pechera|pantalones|botas|mano|mano2|copiar|limpiar|ver>"));
         s.sendMessage(c("&e/fnpc reload &7| &e/fnpc info &7| &e/fnpc creator"));
     }
 
@@ -296,42 +297,51 @@ public class FnpcCommand implements CommandExecutor, TabCompleter {
             case "setline" -> {
                 Integer k = a.length > 3 ? num(a[3]) : null;
                 if (k == null || a.length < 5) {
-                    s.sendMessage(c("&eUso: /fnpc edit setline <id> <linea 1-" + MAX_LINE + "> <texto>"));
+                    s.sendMessage(c("&eUso: /fnpc edit setline " + n.id + " <linea> <texto>"));
                     return;
                 }
-                while (n.lines.size() < k) n.lines.add(" ");
-                n.lines.set(k - 1, String.join(" ", Arrays.copyOfRange(a, 4, a.length)));
+                if (k > n.lines.size() + 1) {
+                    s.sendMessage(c("&cEse NPC tiene &e" + n.lines.size()
+                            + " &clineas. Edita de la 1 a la " + (n.lines.size() + 1)
+                            + " o usa &e/fnpc edit addline " + n.id + " <texto>"));
+                    return;
+                }
+                String text = String.join(" ", Arrays.copyOfRange(a, 4, a.length));
+                if (k == n.lines.size() + 1) n.lines.add(text);
+                else n.lines.set(k - 1, text);
                 mgr.refresh(n);
                 s.sendMessage(c("&aLinea &e" + k + " &aactualizada."));
             }
             case "addline" -> {
-                if (a.length < 4) {
-                    s.sendMessage(c("&eUso: /fnpc edit addline <id> <texto>"));
+                if (n.lines.size() >= MAX_LINE) {
+                    s.sendMessage(c("&cLimite de " + MAX_LINE + " lineas."));
+                    return;
+                }
+                String text = a.length > 3 ? String.join(" ", Arrays.copyOfRange(a, 3, a.length)) : DEFAULT_LINE;
+                n.lines.add(text);
+                mgr.refresh(n);
+                s.sendMessage(c("&aLinea &e" + n.lines.size() + " &aagregada. Cambiala con &e/fnpc edit setline "
+                        + n.id + " " + n.lines.size() + " <texto>"));
+            }
+            case "insertline" -> {
+                Integer k = a.length > 3 ? num(a[3]) : null;
+                if (k == null || k > n.lines.size() + 1) {
+                    s.sendMessage(c("&eUso: /fnpc edit insertline " + n.id + " <1-" + (n.lines.size() + 1) + "> [texto]"));
                     return;
                 }
                 if (n.lines.size() >= MAX_LINE) {
                     s.sendMessage(c("&cLimite de " + MAX_LINE + " lineas."));
                     return;
                 }
-                n.lines.add(String.join(" ", Arrays.copyOfRange(a, 3, a.length)));
-                mgr.refresh(n);
-                s.sendMessage(c("&aLinea agregada (&e" + n.lines.size() + "&a)."));
-            }
-            case "insertline" -> {
-                Integer k = a.length > 3 ? num(a[3]) : null;
-                if (k == null || a.length < 5) {
-                    s.sendMessage(c("&eUso: /fnpc edit insertline <id> <linea> <texto>"));
-                    return;
-                }
-                while (n.lines.size() < k - 1) n.lines.add(" ");
-                n.lines.add(k - 1, String.join(" ", Arrays.copyOfRange(a, 4, a.length)));
+                String text = a.length > 4 ? String.join(" ", Arrays.copyOfRange(a, 4, a.length)) : DEFAULT_LINE;
+                n.lines.add(k - 1, text);
                 mgr.refresh(n);
                 s.sendMessage(c("&aLinea insertada en &e" + k + "&a."));
             }
             case "removeline" -> {
                 Integer k = a.length > 3 ? num(a[3]) : null;
                 if (k == null || k > n.lines.size()) {
-                    s.sendMessage(c("&eUso: /fnpc edit removeline <id> <linea existente>"));
+                    s.sendMessage(c("&eUso: /fnpc edit removeline " + n.id + " <linea existente>"));
                     return;
                 }
                 n.lines.remove(k - 1);
@@ -659,7 +669,7 @@ public class FnpcCommand implements CommandExecutor, TabCompleter {
 
         if (a.length == 1) {
             return filter(List.of("create", "borrar", "lista", "tp", "mover", "nombre", "modo", "mirar", "look",
-                    "path", "anim", "skin", "edit", "pose", "glow", "efecto", "action", "shop",
+                    "path", "anim", "skin", "edit", "equip", "pose", "glow", "efecto", "action", "shop",
                     "reload", "ayuda", "info", "creator"), a[0]);
         }
         if (a.length == 2) {
@@ -694,6 +704,13 @@ public class FnpcCommand implements CommandExecutor, TabCompleter {
             }
         }
         if (a.length == 4) {
+            if (sub.equals("edit") && List.of("setline", "insertline", "removeline").contains(a[1].toLowerCase())) {
+                Npc en = mgr.get(a[2]);
+                int total = en == null ? 0 : en.lines.size();
+                List<String> nums = new ArrayList<>();
+                for (int i = 1; i <= total + 1; i++) nums.add(String.valueOf(i));
+                return filter(nums, a[3]);
+            }
             if (sub.equals("efecto")) return filter(List.of("on", "off"), a[3]);
             if (sub.equals("path") && a[2].equalsIgnoreCase("modo")) return filter(PATH_MODES, a[3]);
             if (sub.equals("anim")) return filter(List.of("repetir"), a[3]);
