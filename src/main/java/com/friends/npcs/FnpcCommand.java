@@ -85,6 +85,7 @@ public class FnpcCommand implements CommandExecutor, TabCompleter {
             case "mirar", "look" -> mirar(s, a);
             case "anim" -> anim(s, a);
             case "action", "accion" -> NpcActions.command(mgr, s, a);
+            case "equip", "equipo" -> NpcEquip.command(mgr, s, a);
             case "shop", "tienda" -> plugin.shop.command(s, a);
             case "reload" -> {
                 plugin.reloadConfig();
@@ -650,6 +651,7 @@ public class FnpcCommand implements CommandExecutor, TabCompleter {
         if (a.length == 1 && !s.hasPermission("fnpc.admin")) return filter(List.of("info", "creator"), a[0]);
         if (!s.hasPermission("fnpc.admin")) return List.of();
         if (a[0].equalsIgnoreCase("action") || a[0].equalsIgnoreCase("accion")) return NpcActions.tab(mgr, a);
+        if (a[0].equalsIgnoreCase("equip") || a[0].equalsIgnoreCase("equipo")) return NpcEquip.tab(mgr, a);
         if (a[0].equalsIgnoreCase("shop") || a[0].equalsIgnoreCase("tienda")) return plugin.shop.tab(a);
         List<String> ids = mgr.all().stream().map(n -> n.id).toList();
         String sub = a[0].toLowerCase();
