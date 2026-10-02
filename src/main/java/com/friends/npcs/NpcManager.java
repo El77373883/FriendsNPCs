@@ -55,7 +55,7 @@ public class NpcManager {
         POSES.put("normal", Pose.STANDING);
         POSES.put("dormir", Pose.SLEEPING);
         POSES.put("nadar", Pose.SWIMMING);
-        POSES.put("agachado", Pose.CROUCHING);
+        POSES.put("agachado", Pose.SNEAKING);
         POSES.put("volar", Pose.FALL_FLYING);
         POSES.put("girar", Pose.SPIN_ATTACK);
 
