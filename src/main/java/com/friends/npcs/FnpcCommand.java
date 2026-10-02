@@ -56,6 +56,10 @@ public class FnpcCommand implements CommandExecutor, TabCompleter {
             info(s);
             return true;
         }
+        if (a.length > 0 && a[0].equalsIgnoreCase("creator")) {
+            creator(s);
+            return true;
+        }
         if (!s.hasPermission("fnpc.admin")) {
             s.sendMessage(c("&cNo tienes permiso."));
             return true;
@@ -93,15 +97,13 @@ public class FnpcCommand implements CommandExecutor, TabCompleter {
     }
 
     private void help(CommandSender s) {
-        s.sendMessage(c("&e/fnpc shop <id> <crear|quitar|editar|items|precio|titulo|filas|color|limpiar>"));
-        s.sendMessage(c("&e/fnpc action <id> <add|list|remove|clear|clic|cooldown|permiso>"));
         s.sendMessage(c("&6&lFriendsNPCs &7- comandos"));
         s.sendMessage(c("&e/fnpc create <id> <player|mob> [nombre]"));
         s.sendMessage(c("&e/fnpc borrar|tp|mover <id>"));
         s.sendMessage(c("&e/fnpc lista"));
         s.sendMessage(c("&e/fnpc nombre <id> <texto>"));
         s.sendMessage(c("&e/fnpc modo <id> <quieto|deambular|patrullar|seguir>"));
-        s.sendMessage(c("&e/fnpc mirar <id> <on|off>"));
+        s.sendMessage(c("&e/fnpc look <id> [on|off] &7(mirar al jugador)"));
         s.sendMessage(c("&e/fnpc path <id> <add|insert|remove|list|clear|tp|show|goto|modo|velocidad|espera|iniciar|detener>"));
         s.sendMessage(c("&e/fnpc anim <id> <saludar|golpear|off> [repetir <seg>]"));
         s.sendMessage(c("&e/fnpc skin <id> <jugador>"));
@@ -109,7 +111,9 @@ public class FnpcCommand implements CommandExecutor, TabCompleter {
         s.sendMessage(c("&e/fnpc pose <id> <normal|dormir|nadar|agachado|volar|girar>"));
         s.sendMessage(c("&e/fnpc glow <id> <color|off|arcoiris>"));
         s.sendMessage(c("&e/fnpc efecto <id> <fuego|invisible> [on|off]"));
-        s.sendMessage(c("&e/fnpc reload &7| &e/fnpc info"));
+        s.sendMessage(c("&e/fnpc shop <id> <crear|quitar|editar|items|precio|titulo|filas|color|limpiar>"));
+        s.sendMessage(c("&e/fnpc action <id> <add|list|remove|clear|clic|cooldown|permiso>"));
+        s.sendMessage(c("&e/fnpc reload &7| &e/fnpc info &7| &e/fnpc creator"));
     }
 
     private void info(CommandSender s) {
@@ -121,6 +125,32 @@ public class FnpcCommand implements CommandExecutor, TabCompleter {
             Component line = c("&7" + k + ": &b" + v);
             if (v.startsWith("http")) line = line.clickEvent(ClickEvent.openUrl(v));
             s.sendMessage(line);
+        }
+    }
+
+    private void creator(CommandSender s) {
+        String v = plugin.getPluginMeta().getVersion();
+        s.sendMessage(c(" "));
+        s.sendMessage(c("&8&m                                                  "));
+        s.sendMessage(FriendsNPCs.rich("<gradient:#FFAA00:#FFFF55><bold>  ★ FriendsNPCs PREMIUM ★</bold></gradient>"));
+        s.sendMessage(c("&7  Version &f" + v));
+        s.sendMessage(c(" "));
+        s.sendMessage(FriendsNPCs.rich("<gray>  Hecho por </gray><gradient:#55FFFF:#5555FF><bold>soyadrianyt001</bold></gradient>"));
+        s.sendMessage(c("&7  NPCs con skin, tiendas, rutas y policia"));
+        for (String k : List.of("youtube", "tiktok", "discord", "instagram")) {
+            String val = plugin.getConfig().getString("redes." + k, "");
+            if (val == null || val.isBlank()) continue;
+            Component line = c("&7  " + k + ": &b" + val);
+            if (val.startsWith("http")) line = line.clickEvent(ClickEvent.openUrl(val));
+            s.sendMessage(line);
+        }
+        s.sendMessage(c("&8&m                                                  "));
+        s.sendMessage(c(" "));
+        if (s instanceof Player p) {
+            p.showTitle(Title.title(
+                    FriendsNPCs.rich("<gradient:#FFAA00:#FFFF55><bold>FriendsNPCs PREMIUM</bold></gradient>"),
+                    FriendsNPCs.rich("<gray>v" + v + " · hecho por </gray><aqua>soyadrianyt001</aqua>")));
+            p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
         }
     }
 
@@ -366,7 +396,7 @@ public class FnpcCommand implements CommandExecutor, TabCompleter {
 
     // ---------- Mirar / animaciones ----------
 
-        private void mirar(CommandSender s, String[] a) {
+    private void mirar(CommandSender s, String[] a) {
         Npc n = a.length > 1 ? mgr.get(a[1]) : null;
         if (n == null) {
             s.sendMessage(c("&eUso: /fnpc look <id> [on|off]"));
@@ -385,7 +415,6 @@ public class FnpcCommand implements CommandExecutor, TabCompleter {
         mgr.save();
         s.sendMessage(c("&aMirar al jugador: &e" + (n.look ? "activado" : "desactivado")));
     }
-
 
     private void anim(CommandSender s, String[] a) {
         Npc n = a.length > 2 ? mgr.get(a[1]) : null;
@@ -618,6 +647,7 @@ public class FnpcCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public List<String> onTabComplete(CommandSender s, Command cmd, String label, String[] a) {
+        if (a.length == 1 && !s.hasPermission("fnpc.admin")) return filter(List.of("info", "creator"), a[0]);
         if (!s.hasPermission("fnpc.admin")) return List.of();
         if (a[0].equalsIgnoreCase("action") || a[0].equalsIgnoreCase("accion")) return NpcActions.tab(mgr, a);
         if (a[0].equalsIgnoreCase("shop") || a[0].equalsIgnoreCase("tienda")) return plugin.shop.tab(a);
@@ -625,14 +655,15 @@ public class FnpcCommand implements CommandExecutor, TabCompleter {
         String sub = a[0].toLowerCase();
 
         if (a.length == 1) {
-            return filter(List.of("create", "borrar", "lista", "tp", "mover", "nombre", "modo", "mirar",
-                    "path", "anim", "skin", "edit", "pose", "glow", "efecto", "reload", "ayuda", "info"), a[0]);
+            return filter(List.of("create", "borrar", "lista", "tp", "mover", "nombre", "modo", "mirar", "look",
+                    "path", "anim", "skin", "edit", "pose", "glow", "efecto", "action", "shop",
+                    "reload", "ayuda", "info", "creator"), a[0]);
         }
         if (a.length == 2) {
             if (sub.equals("edit")) {
                 return filter(List.of("setline", "addline", "insertline", "removeline", "lines", "clearlines"), a[1]);
             }
-            if (List.of("borrar", "delete", "tp", "mover", "nombre", "modo", "mirar", "path", "anim",
+            if (List.of("borrar", "delete", "tp", "mover", "nombre", "modo", "mirar", "look", "path", "anim",
                     "skin", "pose", "glow", "efecto").contains(sub)) {
                 return filter(ids, a[1]);
             }
@@ -642,7 +673,7 @@ public class FnpcCommand implements CommandExecutor, TabCompleter {
                 case "edit" -> { return filter(ids, a[2]); }
                 case "create", "crear" -> { return filter(TYPES, a[2]); }
                 case "modo" -> { return filter(MODES, a[2]); }
-                case "mirar" -> { return filter(List.of("on", "off"), a[2]); }
+                case "mirar", "look" -> { return filter(List.of("on", "off"), a[2]); }
                 case "path" -> { return filter(PATH_SUBS, a[2]); }
                 case "anim" -> { return filter(List.of("saludar", "golpear", "off"), a[2]); }
                 case "pose" -> { return filter(new ArrayList<>(NpcManager.POSES.keySet()), a[2]); }
