@@ -9,7 +9,19 @@ commands:
   fnpc:
     description: Comando principal de FriendsNPCs
     usage: /fnpc ayuda
+  arrestar:
+    description: Arresta a un jugador
+    usage: /arrestar <jugador> [minutos] [multa]
+  liberar:
+    description: Libera a un preso
+    usage: /liberar <jugador>
+  carcel:
+    description: Configura la carcel
+    usage: /carcel <set|lista>
 permissions:
   fnpc.admin:
     description: Acceso total a FriendsNPCs
+    default: op
+  fnpc.policia:
+    description: Arrestar, liberar y configurar la carcel
     default: op
