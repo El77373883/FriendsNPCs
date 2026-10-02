@@ -253,9 +253,11 @@ public class NpcManager {
         n.body.setVisualFire(n.effects.contains("fuego"));
         n.body.setInvisible(n.effects.contains("invisible"));
 
-        applyGlow(n);
+                applyGlow(n);
         applySkin(n);
+        NpcEquip.apply(n);
     }
+
 
     void applySkin(Npc n) {
         if (!n.isPlayer() || n.skinName == null || !(n.body instanceof Mannequin m)) return;
@@ -459,6 +461,8 @@ public class NpcManager {
             y.set(p + "tienda.items", NpcShop.serialize(n.shopItems));
             y.set(p + "anim.nombre", n.anim);
             y.set(p + "anim.cada", n.animEvery);
+            NpcEquip.save(y, p, n);
+
             if (n.skinName != null) {
                 y.set(p + "skin.nombre", n.skinName);
                 y.set(p + "skin.value", n.skinValue);
@@ -510,6 +514,8 @@ public class NpcManager {
             n.shopItems = NpcShop.deserialize(s.getMapList("tienda.items"));
             n.anim = s.getString("anim.nombre", "off");
             n.animEvery = s.getInt("anim.cada", 0);
+            NpcEquip.load(s, n);
+
             n.skinName = s.getString("skin.nombre");
             n.skinValue = s.getString("skin.value");
             n.skinSignature = s.getString("skin.signature");
