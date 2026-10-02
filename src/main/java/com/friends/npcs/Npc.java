@@ -5,11 +5,16 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Mob;
 import org.bukkit.entity.TextDisplay;
 import org.bukkit.entity.Zombie;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 public class Npc {
 
@@ -35,15 +40,16 @@ public class Npc {
 
     // Extras
     public boolean look = false;
-    public java.util.Map<String, org.bukkit.inventory.ItemStack> equip = new java.util.LinkedHashMap<>();
+    public Map<String, ItemStack> equip = new LinkedHashMap<>();
 
-        // Acciones al hacer clic
+    // Acciones al hacer clic
     public List<String> actions = new ArrayList<>();
     public String clickType = "derecho"; // izquierdo | derecho | ambos
     public int cooldown = 0;
     public String clickPerm = "";
-    public final java.util.Map<java.util.UUID, Long> lastUse = new java.util.HashMap<>();
-        // Tienda
+    public final Map<UUID, Long> lastUse = new HashMap<>();
+
+    // Tienda
     public boolean shop = false;
     public String shopTitle = "&6&lTienda";
     public int shopRows = 5;
