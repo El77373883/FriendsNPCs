@@ -243,8 +243,13 @@ public class NpcManager {
 
     void apply(Npc n) {
         if (n.body == null) return;
-        n.body.customName(FriendsNPCs.rich(n.name));
-        n.body.setCustomNameVisible(n.lines.isEmpty());
+        if (n.lines.isEmpty()) {
+            n.body.customName(FriendsNPCs.rich(n.name));
+            n.body.setCustomNameVisible(true);
+        } else {
+            n.body.customName(null);
+            n.body.setCustomNameVisible(false);
+        }
 
         Mob m = n.mover();
         if (m != null) m.setAI(!n.mode.equals("quieto") && !n.pose.equals("dormir"));
@@ -253,11 +258,10 @@ public class NpcManager {
         n.body.setVisualFire(n.effects.contains("fuego"));
         n.body.setInvisible(n.effects.contains("invisible"));
 
-                applyGlow(n);
+        applyGlow(n);
         applySkin(n);
         NpcEquip.apply(n);
     }
-
 
     void applySkin(Npc n) {
         if (!n.isPlayer() || n.skinName == null || !(n.body instanceof Mannequin m)) return;
@@ -462,7 +466,6 @@ public class NpcManager {
             y.set(p + "anim.nombre", n.anim);
             y.set(p + "anim.cada", n.animEvery);
             NpcEquip.save(y, p, n);
-
             if (n.skinName != null) {
                 y.set(p + "skin.nombre", n.skinName);
                 y.set(p + "skin.value", n.skinValue);
@@ -492,7 +495,7 @@ public class NpcManager {
             Location l = new Location(w, s.getDouble("x"), s.getDouble("y"), s.getDouble("z"),
                     (float) s.getDouble("yaw"), (float) s.getDouble("pitch"));
             Npc n = new Npc(id, s.getString("type", "PLAYER"), s.getString("name", id), l, worldName);
-    n.mode = s.getString("mode", "quieto");
+            n.mode = s.getString("mode", "quieto");
             n.lines = new ArrayList<>(s.getStringList("lineas"));
             n.pose = s.getString("pose", "normal");
             n.glow = s.getString("glow", "off");
@@ -515,7 +518,6 @@ public class NpcManager {
             n.anim = s.getString("anim.nombre", "off");
             n.animEvery = s.getInt("anim.cada", 0);
             NpcEquip.load(s, n);
-
             n.skinName = s.getString("skin.nombre");
             n.skinValue = s.getString("skin.value");
             n.skinSignature = s.getString("skin.signature");
