@@ -488,7 +488,7 @@ public class NpcManager {
             Location l = new Location(w, s.getDouble("x"), s.getDouble("y"), s.getDouble("z"),
                     (float) s.getDouble("yaw"), (float) s.getDouble("pitch"));
             Npc n = new Npc(id, s.getString("type", "PLAYER"), s.getString("name", id), l, worldName);
-            n.mode = s.getString("mode", "deambular");
+    n.mode = s.getString("mode", "quieto");
             n.lines = new ArrayList<>(s.getStringList("lineas"));
             n.pose = s.getString("pose", "normal");
             n.glow = s.getString("glow", "off");
