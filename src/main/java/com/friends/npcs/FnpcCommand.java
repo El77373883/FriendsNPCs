@@ -78,7 +78,7 @@ public class FnpcCommand implements CommandExecutor, TabCompleter {
             case "glow" -> glow(s, a);
             case "efecto" -> efecto(s, a);
             case "path" -> path(s, a);
-            case "mirar" -> mirar(s, a);
+            case "mirar", "look" -> mirar(s, a);
             case "anim" -> anim(s, a);
             case "action", "accion" -> NpcActions.command(mgr, s, a);
             case "shop", "tienda" -> plugin.shop.command(s, a);
@@ -366,16 +366,26 @@ public class FnpcCommand implements CommandExecutor, TabCompleter {
 
     // ---------- Mirar / animaciones ----------
 
-    private void mirar(CommandSender s, String[] a) {
-        Npc n = a.length > 2 ? mgr.get(a[1]) : null;
-        if (n == null || !(a[2].equalsIgnoreCase("on") || a[2].equalsIgnoreCase("off"))) {
-            s.sendMessage(c("&eUso: /fnpc mirar <id> <on|off>"));
+        private void mirar(CommandSender s, String[] a) {
+        Npc n = a.length > 1 ? mgr.get(a[1]) : null;
+        if (n == null) {
+            s.sendMessage(c("&eUso: /fnpc look <id> [on|off]"));
             return;
         }
-        n.look = a[2].equalsIgnoreCase("on");
+        if (a.length > 2) {
+            if (a[2].equalsIgnoreCase("on")) n.look = true;
+            else if (a[2].equalsIgnoreCase("off")) n.look = false;
+            else {
+                s.sendMessage(c("&eUso: /fnpc look <id> [on|off]"));
+                return;
+            }
+        } else {
+            n.look = !n.look;
+        }
         mgr.save();
         s.sendMessage(c("&aMirar al jugador: &e" + (n.look ? "activado" : "desactivado")));
     }
+
 
     private void anim(CommandSender s, String[] a) {
         Npc n = a.length > 2 ? mgr.get(a[1]) : null;
